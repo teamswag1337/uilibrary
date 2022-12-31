@@ -339,3 +339,4 @@ function library:createPage(name)
 	
 	return funcs
 end
+return library
