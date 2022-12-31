@@ -1,3 +1,7 @@
+if _G.uilib then
+	_G.uilib:Destroy()
+end
+
 local library = {}
 local UI10 = Instance.new("ScreenGui")
 local Title = Instance.new("Frame")
@@ -23,9 +27,11 @@ local Open = Instance.new("TextButton")
 --Properties:
 
 UI10.Name = "UI1.0"
-UI10.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+UI10.Parent = game.CoreGui
 UI10.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 UI10.ResetOnSpawn = false
+
+_G.uilib = UI10
 
 Title.Name = "Title"
 Title.Parent = UI10
@@ -33,6 +39,9 @@ Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Title.BorderColor3 = Color3.fromRGB(50, 50, 50)
 Title.Position = UDim2.new(0.477843434, 0, 0.437362641, 0)
 Title.Size = UDim2.new(0, 587, 0, 25)
+Title.Active = true
+Title.Selectable = true
+Title.Draggable = true
 
 TitleText.Name = "TitleText"
 TitleText.Parent = Title
@@ -194,6 +203,18 @@ Open.TextStrokeColor3 = Color3.fromRGB(106, 106, 106)
 
 --Main starts here:
 
+local guiOpen = true
+Hide.MouseButton1Click:connect(function()
+	guiOpen = false
+	Title.Visible = false
+	Open.Visible = true
+end)
+Open.MouseButton1Click:connect(function()
+	guiOpen = true
+	Title.Visible = true
+	Open.Visible = false
+end)
+
 function convertNToL(num: number)
 	local letters = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 	return string.upper(letters[num])
@@ -201,6 +222,10 @@ end
 
 function library:setTitle(title: string)
 	TitleText.Text = title
+end
+
+function library:setOpenButtonPos(pos: UDim2)
+	Open.Position = pos
 end
 
 function library:createPage(name)
@@ -214,9 +239,13 @@ function library:createPage(name)
 	end
 	
 	local funcs = {}
-	
-	
+	local uiList = Instance.new("UIListLayout", pFrame)
+	uiList.FillDirection = Enum.FillDirection.Horizontal
+	pButton.Visible = true
+	pButton.Text = name
 	pFrame.Name = name
+	pFrame.Visible = false
+	pFrame.Parent = Content
 	pButton.Name = name
 	pButton.MouseButton1Down:connect(function()
 		for i, v in pairs(Content:GetChildren()) do
@@ -225,13 +254,23 @@ function library:createPage(name)
 		pFrame.Visible = true
 	end)
 	pButton.Parent = Select
+	
 	function funcs:createSection(name)
+		local count = 0
+		for i, v in pairs(pFrame:GetChildren()) do
+			if v.Name == "Section" then
+				count += 1
+			end
+		end
+		if count > 2 then
+			warn("Cannot create more than 2 sections.")
+			return
+		end
 		local sFuncs = {}
 		local numObjects = 0
 		local cSection = Section:Clone()
 		for i, v in pairs(cSection:GetChildren()) do
 			if v.Name ~= "!SectionTitle" and v.Name ~= "Inner" then
-				print("destroyed: "..v.Name)
 				v:Destroy()
 			end
 		end
@@ -240,20 +279,24 @@ function library:createPage(name)
 				v:Destroy()
 			end
 		end
+		cSection.Parent = pFrame
+		cSection["!SectionTitle"].Text = name
+
 		
 		function sFuncs:createButton(text , func)
 			numObjects += 1
 			local bClone = BButton:Clone()
 			bClone.Name = convertNToL(numObjects)..text
+			bClone.Text = text
 			bClone.MouseButton1Click:connect(func)
-			bClone.Parent = cSection
+			bClone.Parent = cSection.Inner
 		end
 		
-		function sFuncs:createTextBox(place, text, giveOnEnter, func)
+		function sFuncs:createTextBox(place, giveOnEnter, func)
 			numObjects += 1
 			local tClone = ATextBox:Clone()
-			tClone.PlaceholderText = text
-			tClone.Name = convertNToL(numObjects)..text
+			tClone.PlaceholderText = place
+			tClone.Name = convertNToL(numObjects)..place
 			tClone.FocusLost:connect(function(enter)
 				if giveOnEnter and enter then
 					func(tClone.Text)
@@ -261,7 +304,7 @@ function library:createPage(name)
 					func(tClone.Text)
 				end
 			end)
-			tClone.Parent = cSection
+			tClone.Parent = cSection.Inner
 		end
 		
 		function sFuncs:createToggle(text, default, func)
@@ -274,7 +317,7 @@ function library:createPage(name)
 				tClone.Status.Text = "ON"
 			end
 			tClone.Name = convertNToL(numObjects)..text
-			tClone.Text = text
+			tClone.Text = text.. " :"
 			tClone.MouseButton1Down:connect(function()
 				on = not on
 				if on then
@@ -286,7 +329,7 @@ function library:createPage(name)
 				end
 				func(on)
 			end)
-			tClone.Parent = cSection
+			tClone.Parent = cSection.Inner
 		end
 		
 		return sFuncs
@@ -296,5 +339,3 @@ function library:createPage(name)
 	
 	return funcs
 end
-
-return library
