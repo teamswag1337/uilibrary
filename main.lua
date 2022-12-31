@@ -199,6 +199,10 @@ function convertNToL(num: number)
 	return string.upper(letters[num])
 end
 
+function library:setTitle(title: string)
+	TitleText.Text = title
+end
+
 function library:createPage(name)
 	local pFrame = Page:Clone()
 	local pButton = PageButton:Clone()
@@ -211,6 +215,7 @@ function library:createPage(name)
 	
 	local funcs = {}
 	
+	
 	pFrame.Name = name
 	pButton.Name = name
 	pButton.MouseButton1Down:connect(function()
@@ -219,7 +224,7 @@ function library:createPage(name)
 		end
 		pFrame.Visible = true
 	end)
-	
+	pButton.Parent = Select
 	function funcs:createSection(name)
 		local sFuncs = {}
 		local numObjects = 0
